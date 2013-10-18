@@ -4,15 +4,13 @@ from file_reader import FileReader
 from os import linesep
 
 queries = FileReader('./qrys.txt').all()
-documents = FileReader('./docs.txt').all()
+documents = list(FileReader('./docs.txt', True).all())
 
 with open('./brute.top', 'w') as brute:
   _join = string.join
-  d_list = list(documents)
-  d_list.reverse()
 
   def recent_docs(take_n, query):
-    return islice((d_n for (d_n, d) in d_list if query.issubset(d)), take_n)
+    return islice((d_n for (d_n, d) in documents if query <= d), take_n)
 
   def match_line(query):
     query_number, terms = query
