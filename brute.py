@@ -11,5 +11,5 @@ with open('./brute.top', 'w') as brute:
   document_list = list(documents)
   document_list.reverse()
   for (q_n, q) in queries:
-    matches = islice((str(d_n) for (d_n, d) in document_list if q.issubset(d)), 5)
-    brute.write(str(q_n) + ' ' + _join(matches, ' ') + linesep)
+    matches = islice((d_n for (d_n, d) in document_list if q.issubset(d)), 5)
+    brute.write(q_n + ' ' + _join(matches, ' ') + linesep)

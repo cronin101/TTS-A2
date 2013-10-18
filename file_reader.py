@@ -19,8 +19,5 @@ class FileReader:
       (lowers * 2) + digits + (' ' * len(deletions))
     )
 
-
-    def split(line):
-      return string.translate(line, tab).split()
-
-    return ((split[0], set(split[1:])) for split in (split(line) for line in self.lines))
+    _ts = string.translate
+    return ((split[0], set(split[1:])) for split in (_ts(line, tab).split() for line in self.lines))
