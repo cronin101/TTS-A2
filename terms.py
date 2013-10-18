@@ -23,19 +23,20 @@ class TermScorer:
 
 
   def output_scores(self):
-    with open(self.filename, 'w') as terms_top:
-      _join = string.join
+    def recent_matches(terms, documents, num_matches):
+      partial_score = list(repeat(0, len(documents)))
 
       def increment(score, doc_id):
         score[doc_id - 1] += 1
 
-      for (q_n, q) in queries:
-        partial_score = list(repeat(0, len(documents)))
-        for term in q:
-          for doc_id in self.posting[term]: increment(partial_score, doc_id)
+      for term in q:
+        for doc_id in self.posting[term]: increment(partial_score, doc_id)
 
-        matches = (str(doc_id) for doc_id in xrange(len(documents), 0, -1) if partial_score[doc_id - 1] == len(q))
-        line = q_n + ' ' + _join(islice(matches, 5), ' ') + linesep
-        terms_top.write(line)
+      matches = (str(doc_id) for doc_id in xrange(len(documents), 0, -1) if partial_score[doc_id - 1] == len(q))
+      return islice(matches, num_matches)
+
+    with open(self.filename, 'w') as terms_top:
+      for (q_n, q) in queries:
+        terms_top.write(q_n + ' ' + string.join(recent_matches(q, self.documents, 5), ' ') + linesep)
 
 TermScorer(queries, documents, './terms.top').build_index().output_scores()
