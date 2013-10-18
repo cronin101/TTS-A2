@@ -20,4 +20,4 @@ class FileReader:
     )
 
     _ts = string.translate
-    return ((split[0], set(split[1:])) for split in (_ts(line, tab).split() for line in self.lines))
+    return ((split[0], frozenset(split[1:])) for split in (_ts(line, tab).split() for line in self.lines))
