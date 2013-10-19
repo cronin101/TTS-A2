@@ -23,7 +23,7 @@ class DocsScorer:
     def recent_matches(terms, documents, num_matches):
       def do_linear_merge(queries):
         postings = [self.posting[query] for query in queries]
-        pointers = [0 for posting in xrange(len(postings))]
+        pointers = [0 for posting in postings]
         ends     = [len(posting) - 1 for posting in postings]
         frontier = [posting[0] for posting in postings]
 
