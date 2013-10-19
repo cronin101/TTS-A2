@@ -16,8 +16,7 @@ class DocsScorer:
   def build_matching_vectors(self):
     self.posting = defaultdict(list)
     for (doc_id, content) in self.documents:
-      for word in content:
-        self.posting[word].append(doc_id)
+      for word in content: self.posting[word].append(doc_id)
     return self
 
   def output_scores(self):
@@ -32,39 +31,25 @@ class DocsScorer:
           return max(_postings[index][_pointers[index]] for index in xrange(len(pointers)))
 
         while True:
-          #print "Pointers: " + str(pointers)
-          #print "Ends: " + str(ends)
           document = find_highest_document_id(postings, pointers)
-          #print "Heads: " + str([postings[i][pointers[i]] for i in xrange(len(pointers))])
-          #print "Indices: " + str(indices)
           matching_i = set([])
-          #print "Document is " + str(document)
           for index in xrange(len(pointers)):
             this_document = postings[index][pointers[index]]
-            #print "This document: " + str(this_document) + " at " + str(index)
-            if this_document == document:
-              matching_i.add(index)
+            if this_document == document: matching_i.add(index)
 
           def increment_and_check_end(matches):
             for index in matching_i:
               if pointers[index] == ends[index]:
-                #print "Pointer " + str(index) + "has reached the end!"
                 return True
               else:
                 pointers[index] += 1
             return False
 
           if len(matching_i) == len(pointers):
-            #print "Pointers match! Appending " + str(document)
             documents.append(str(document))
-            if len(documents) == 5 or increment_and_check_end(matching_i):
-              return documents
-          else:
-            #print "Mismatch so moving pointer"
-            if increment_and_check_end(matching_i):
-              return documents
 
-
+          if len(documents) == 5 or increment_and_check_end(matching_i):
+            return documents
 
       matches = do_linear_merge(map(lambda q: self.posting[q], q))
       return matches
