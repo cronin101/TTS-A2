@@ -32,7 +32,7 @@ class BestScorer:
           return posting[left:right]
 
         postings = (in_range(self.posting[query]) for query in queries)
-        documents = sorted(reduce(lambda x, y: x.intersection(y), sorted(imap(lambda p: set(p), postings), key=len)), reverse=True)
+        documents = sorted(reduce(lambda x,y: x&y, sorted(imap(lambda p: set(p), postings), key=len)), reverse=True)
         for doc in documents:
           yield str(doc)
         return
