@@ -9,8 +9,8 @@ documents = list(FileReader('./docs.txt', True).all())
 
 class DocsScorer:
   def __init__(self, queries, documents, filename):
-    self.filename = filename
-    self.posting = defaultdict(set)
+    self.filename                = filename
+    self.posting                 = defaultdict(set)
     self.queries, self.documents = queries, documents
 
   def build_matching_vectors(self):
@@ -21,38 +21,32 @@ class DocsScorer:
 
   def output_scores(self):
     def recent_matches(terms, documents, num_matches):
-
       def do_linear_merge(queries):
         postings = [self.posting[query] for query in queries]
-        pointers = [0] * len(postings)
-        ends = map(lambda l: len(l) - 1, postings)
-
-        def find_highest_document_id(_postings, _pointers):
-          return max(_postings[index][_pointers[index]] for index in xrange(len(pointers)))
+        pointers = [0 for posting in xrange(len(postings))]
+        ends     = [len(posting) - 1 for posting in postings]
+        frontier = [posting[0] for posting in postings]
 
         while True:
-          document = find_highest_document_id(postings, pointers)
-          matching_i = set([])
-          for index in xrange(len(pointers)):
-            this_document = postings[index][pointers[index]]
-            if this_document == document: matching_i.add(index)
+          document = max(frontier)
+          matches = [index for index in xrange(len(pointers)) if postings[index][pointers[index]] == document]
 
           def increment_and_check_end(matches):
-            for index in matching_i:
+            for index in matches:
               if pointers[index] == ends[index]:
                 return True
               else:
                 pointers[index] += 1
+                frontier[index] = postings[index][pointers[index]]
             return False
 
-          if len(matching_i) == len(pointers):
+          if len(matches) == len(pointers):
             yield str(document)
 
-          if increment_and_check_end(matching_i):
+          if increment_and_check_end(matches):
             return
 
-      matches = islice(do_linear_merge(q), 5)
-      return matches
+      return islice(do_linear_merge(q), num_matches)
 
     with open(self.filename, 'w') as docs_top:
       for (q_n, q) in queries:
