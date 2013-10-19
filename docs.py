@@ -22,8 +22,8 @@ class DocsScorer:
   def output_scores(self):
     def recent_matches(terms, documents, num_matches):
 
-      def do_linear_merge(postings):
-        documents = []
+      def do_linear_merge(queries):
+        postings = [self.posting[query] for query in queries]
         pointers = [0] * len(postings)
         ends = map(lambda l: len(l) - 1, postings)
 
@@ -46,12 +46,12 @@ class DocsScorer:
             return False
 
           if len(matching_i) == len(pointers):
-            documents.append(str(document))
+            yield str(document)
 
-          if len(documents) == 5 or increment_and_check_end(matching_i):
-            return documents
+          if increment_and_check_end(matching_i):
+            return
 
-      matches = do_linear_merge(map(lambda q: self.posting[q], q))
+      matches = islice(do_linear_merge(q), 5)
       return matches
 
     with open(self.filename, 'w') as docs_top:
