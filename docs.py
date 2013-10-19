@@ -2,6 +2,7 @@ from file_reader import FileReader
 from itertools import chain, islice, repeat, imap
 from collections import defaultdict
 from os import linesep
+from bisect import bisect_left, bisect_right
 import string
 
 queries = FileReader('./qrys.txt').all()
@@ -22,9 +23,13 @@ class DocsScorer:
   def output_scores(self):
     def recent_matches(terms, documents, num_matches):
       def do_linear_merge(queries):
-        postings = [self.posting[query] for query in queries]
+        min_max  = min((self.posting[query][0] for query in queries))
+        max_min  = max((self.posting[query][-1] for query in queries))
+        postings = [filter(lambda d: max_min <= d <= min_max, self.posting[query]) for query in queries]
         pointers = [0 for posting in postings]
         ends     = [len(posting) - 1 for posting in postings]
+        if min(ends) == -1:
+          return
         frontier = [posting[0] for posting in postings]
 
         def increment_and_check_end(matches):
