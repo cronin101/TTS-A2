@@ -27,18 +27,18 @@ class DocsScorer:
         ends     = [len(posting) - 1 for posting in postings]
         frontier = [posting[0] for posting in postings]
 
+        def increment_and_check_end(matches):
+          for index in matches:
+            if pointers[index] == ends[index]:
+              return True
+            else:
+              pointers[index] += 1
+              frontier[index] = postings[index][pointers[index]]
+          return False
+
         while True:
           document = max(frontier)
           matches = [index for index in xrange(len(pointers)) if postings[index][pointers[index]] == document]
-
-          def increment_and_check_end(matches):
-            for index in matches:
-              if pointers[index] == ends[index]:
-                return True
-              else:
-                pointers[index] += 1
-                frontier[index] = postings[index][pointers[index]]
-            return False
 
           if len(matches) == len(pointers):
             yield str(document)
