@@ -5,7 +5,7 @@ from os import linesep
 import string
 
 queries = FileReader('./qrys.txt').all()
-documents = list(FileReader('./docs.txt').all())
+documents = list(FileReader('./docs.txt', True).all())
 
 class TermScorer:
   def __init__(self, queries, documents, filename):
@@ -32,6 +32,6 @@ class TermScorer:
 
     with open(self.filename, 'w') as terms_top:
       for (q_n, q) in queries:
-        terms_top.write(q_n + ' ' + string.join(recent_matches(q, self.documents, 5), ' ') + linesep)
+        terms_top.write(str(q_n) + ' ' + string.join(recent_matches(q, self.documents, 5), ' ') + linesep)
 
 TermScorer(queries, documents, './terms.top').build_index().output_scores()
