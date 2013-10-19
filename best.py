@@ -8,7 +8,7 @@ import string
 queries = FileReader('./qrys.txt').all()
 documents = list(FileReader('./docs.txt').all())
 
-class DocsScorer:
+class BestScorer:
   def __init__(self, queries, documents, filename):
     self.filename                = filename
     self.posting                 = defaultdict(set)
@@ -31,30 +31,11 @@ class DocsScorer:
           right = bisect_right(posting, min_max)
           return posting[left:right]
 
-        postings = [in_range(self.posting[query]) for query in queries]
-        pointers = [len(posting) - 1 for posting in postings]
-        if min(pointers) == -1:
-          return
-        frontier = [posting[-1] for posting in postings]
-
-        def decrement_and_check_end(matches):
-          for index in matches:
-            if pointers[index] == 0:
-              return True
-            else:
-              pointers[index] -= 1
-              frontier[index] = postings[index][pointers[index]]
-          return False
-
-        while True:
-          document = max(frontier)
-          matches = [index for (index, this_document) in enumerate(frontier) if this_document == document]
-
-          if len(matches) == len(pointers):
-            yield str(document)
-
-          if decrement_and_check_end(matches):
-            return
+        postings = (in_range(self.posting[query]) for query in queries)
+        documents = sorted(reduce(lambda x, y: x.intersection(y), sorted(imap(lambda p: set(p), postings), key=len)), reverse=True)
+        for doc in documents:
+          yield str(doc)
+        return
 
       return islice(do_linear_merge(q), num_matches)
 
@@ -62,4 +43,4 @@ class DocsScorer:
       for (q_n, q) in queries:
         docs_top.write(str(q_n) + ' ' + string.join(recent_matches(q, self.documents, 5), ' ') + linesep)
 
-DocsScorer(queries, documents, './docs.top').build_matching_vectors().output_scores()
+BestScorer(queries, documents, './best.top').build_matching_vectors().output_scores()
