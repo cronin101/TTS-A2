@@ -5,7 +5,6 @@ from os import linesep
 from bisect import bisect_left, bisect_right
 import string
 
-
 queries = FileReader('./qrys.txt').all()
 documents = list(FileReader('./docs.txt').all())
 
