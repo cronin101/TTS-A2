@@ -5,6 +5,7 @@ from os import linesep
 from bisect import bisect_left, bisect_right
 import string
 
+
 queries = FileReader('./qrys.txt').all()
 documents = list(FileReader('./docs.txt').all())
 
@@ -26,13 +27,13 @@ class BestScorer:
         min_max  = min((self.posting[query][-1] for query in queries))
         max_min  = max((self.posting[query][0] for query in queries))
 
-        def in_range(posting):
+        def set_in_range(posting):
           left = bisect_left(posting, max_min)
           right = bisect_right(posting, min_max)
-          return posting[left:right]
+          return set(posting[left:right])
 
-        postings = (in_range(self.posting[query]) for query in queries)
-        documents = sorted(reduce(lambda x,y: x&y, sorted(imap(lambda p: set(p), postings), key=len)), reverse=True)
+        postings = (set_in_range(self.posting[query]) for query in queries)
+        documents = sorted(reduce(lambda x,y: x&y, sorted(postings, key=len)), reverse=True)
         for doc in documents:
           yield str(doc)
         return
