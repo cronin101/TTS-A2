@@ -38,7 +38,7 @@ class DocsScorer:
 
         while True:
           document = max(frontier)
-          matches = [index for index in xrange(len(pointers)) if postings[index][pointers[index]] == document]
+          matches = [index for (index, this_document) in enumerate(frontier) if this_document == document]
 
           if len(matches) == len(pointers):
             yield str(document)
