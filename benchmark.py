@@ -16,7 +16,7 @@ def time_it(scoring_lambda):
   return time.time() - started
 
 def average_it(scoring_lambda):
-  num_trials = 1
+  num_trials = 3
   return reduce(add, (time_it(scoring_lambda) for i in xrange(num_trials))) / float(num_trials)
 
 bests = map(lambda s: average_it(lambda: BestScorer(n_docs=s)),sizes)
@@ -42,11 +42,9 @@ plot(sizes, doc2, ':k')
 plot(sizes, doc2, 'ko', label='Improved Doc-at-a-time (doc2.py)')
 plot(sizes, terms, ':y')
 plot(sizes, terms, 'yo', label='Term-at-a-time (terms.py)')
-xlim(xmax=sizes[-1])
 xscale('log')
 xlabel('Document count')
 yscale('log')
 ylabel('Runtime in seconds')
 legend(loc='upper left')
-#xkcd()
 show()
