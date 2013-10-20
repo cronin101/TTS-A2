@@ -20,34 +20,36 @@ class BestScorer:
     return self
 
   def output_scores(self):
+    _posting = self.posting
+    _bl, _br = bisect_left, bisect_right
+    _l, _z, _mi, _ma, _en, _s = len, zip, min, max, enumerate, str
     def recent_matches(terms, documents, num_matches):
-      def do_linear_merge(queries):
-        def decrement_and_check_end(matches):
-          for index in matches:
-            reached_end = pointers[index] == ends[index]
-            if reached_end: return True
-            else:           pointers[index] -= 1
-          return False
-
-        n_terms  = len(terms)
-        postings = [self.posting[query] for query in queries]
+      def do_linear_merge():
+        n_terms  = _l(terms)
+        postings = [_posting[term] for term in terms]
         pointers = repeat(-1, n_terms)
         ends     = repeat(0, n_terms)
 
         while True:
-          min_max  = min(posting[pointer] for (posting, pointer) in zip(postings, pointers))
-          max_min  = max(posting[end] for (posting, end) in zip(postings, ends))
-          pointers = [bisect_right(posting, min_max) - 1 for posting in postings]
-          if min(pointers) == (-1): return
+          min_max  = _mi(posting[pointer] for (posting, pointer) in _z(postings, pointers))
+          max_min  = _ma(posting[end] for (posting, end) in _z(postings, ends))
+          pointers = [_br(posting, min_max) - 1 for posting in postings]
+          if _mi(pointers) == (-1): return
 
-          ends     = [bisect_left(posting, max_min) for posting in postings]
-          frontier = [posting[pointer] for (posting, pointer) in zip(postings, pointers)]
-          document = max(frontier)
-          matches  = [index for (index, this_document) in enumerate(frontier) if this_document == document]
+          ends     = [_bl(posting, max_min) for posting in postings]
+          frontier = [posting[pointer] for (posting, pointer) in _z(postings, pointers)]
+          document = _ma(frontier)
+          matches  = [index for (index, this_document) in _en(frontier) if this_document == document]
 
-          if len(matches) == n_terms:          yield str(document)
-          if decrement_and_check_end(matches): return
-      return islice(do_linear_merge(q), num_matches)
+          if _l(matches) == n_terms:
+            yield _s(document)
+
+          for index in matches:
+            reached_end = pointers[index] == ends[index]
+            if reached_end: return
+            else:           pointers[index] -= 1
+
+      return islice(do_linear_merge(), num_matches)
 
     with open(self.filename, 'w') as docs_top:
       for (q_n, q) in self.queries:
