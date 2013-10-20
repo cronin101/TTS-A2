@@ -4,62 +4,54 @@ from collections import defaultdict
 from os import linesep
 from bisect import bisect_left, bisect_right
 import string
+import sys
+import gc
 
-queries = FileReader('./qrys.txt').all()
 documents = list(FileReader('./docs.txt').all())
 
 class DocsScorer:
-  def __init__(self, queries, documents, filename):
+  def __init__(self, query_file='./qrys.txt', n_docs=None, doc_file='./docs.txt', filename='./docs.top'):
     self.filename                = filename
-    self.posting                 = defaultdict(set)
-    self.queries, self.documents = queries, documents
+    self.posting                 = defaultdict(list)
+    self.queries = FileReader(query_file).all()
+    self.documents = islice(FileReader(doc_file).all(), n_docs)
 
   def build_matching_vectors(self):
-    self.posting = defaultdict(list)
     for (doc_id, content) in self.documents:
       for word in content: self.posting[word].append(doc_id)
     return self
 
   def output_scores(self):
-    def recent_matches(terms, documents, num_matches):
+    def recent_matches(terms, num_matches):
       def do_linear_merge(queries):
-        min_max  = min((self.posting[query][-1] for query in queries))
-        max_min  = max((self.posting[query][0] for query in queries))
-
-        def in_range(posting):
-          left = bisect_left(posting, max_min)
-          right = bisect_right(posting, min_max)
-          return posting[left:right]
-
-        postings = [in_range(self.posting[query]) for query in queries]
+        postings = [self.posting[query] for query in queries]
         pointers = [len(posting) - 1 for posting in postings]
         if min(pointers) == -1:
           return
         frontier = [posting[-1] for posting in postings]
 
-        def decrement_and_check_end(matches):
-          for index in matches:
-            if pointers[index] == 0:
-              return True
-            else:
-              pointers[index] -= 1
-              frontier[index] = postings[index][pointers[index]]
-          return False
-
         while True:
           document = max(frontier)
           matches = [index for (index, this_document) in enumerate(frontier) if this_document == document]
-
           if len(matches) == len(pointers):
             yield str(document)
 
-          if decrement_and_check_end(matches):
-            return
+          for index in matches:
+            if pointers[index] == 0:
+              return
+            else:
+              pointers[index] -= 1
+              frontier[index] = postings[index][pointers[index]]
 
       return islice(do_linear_merge(q), num_matches)
 
     with open(self.filename, 'w') as docs_top:
-      for (q_n, q) in queries:
-        docs_top.write(str(q_n) + ' ' + string.join(recent_matches(q, self.documents, 5), ' ') + linesep)
+      for (q_n, q) in self.queries:
+        docs_top.write(str(q_n) + ' ' + string.join(recent_matches(q, 5), ' ') + linesep)
 
-DocsScorer(queries, documents, './docs.top').build_matching_vectors().output_scores()
+if __name__ == '__main__':
+  gc.disable()
+  num_docs = None
+  if len(sys.argv) > 1:
+    num_docs = int(sys.argv[1])
+  DocsScorer(n_docs = num_docs).build_matching_vectors().output_scores()
