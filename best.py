@@ -5,10 +5,7 @@ from os import linesep
 from bisect import bisect_left, bisect_right
 import string
 from heapq import heappush, heappop
-import gc
-
-queries = FileReader('./qrys.txt').all()
-documents = FileReader('./docs.txt').all()
+import sys
 
 class BestScorer:
   def __init__(self, queries, documents, filename):
@@ -25,6 +22,9 @@ class BestScorer:
     def recent_matches(terms, num_matches):
       num_terms = len(terms)
       def do_linear_merge(queries):
+        if min(len(self.posting[query]) for query in queries) == 0:
+          return
+
         min_max  = min((self.posting[query][-1] for query in queries))
         max_min  = max((self.posting[query][0] for query in queries))
 
@@ -33,15 +33,13 @@ class BestScorer:
           right = bisect_right(posting, min_max)
           return set(posting[left:right])
 
-        postings = ((len(p), p) for p in (set_in_range(self.posting[query]) for query in queries))
-
         h = []
-        for p in postings: heappush(h, p)
+        for posting in ((len(p), p) for p in (set_in_range(self.posting[query]) for query in queries)):
+          heappush(h, posting)
 
-        def gen_heap(h):
-          return (heappop(h)[1] for i in xrange(num_terms))
+        popheap = (heappop(h)[1] for i in xrange(num_terms))
 
-        documents = sorted(reduce(lambda x,y: x&y, gen_heap(h)), reverse=True)
+        documents = sorted(reduce(lambda x,y: x&y, popheap), reverse=True)
         for doc in documents:
           yield str(doc)
         return
@@ -52,5 +50,13 @@ class BestScorer:
       _join = string.join
       docs_top.write(_join((str(q_n) + ' ' + _join(recent_matches(q, 5), ' ') + linesep for (q_n, q) in queries), ''))
 
-gc.disable()
+
+num_documents = None
+
+if len(sys.argv) >= 2:
+  num_documents   = int(sys.argv[1])
+
+queries = FileReader('./qrys.txt').all()
+documents = islice(FileReader('./docs.txt').all(), num_documents)
+
 BestScorer(queries, documents, './best.top').build_matching_vectors().output_scores()
