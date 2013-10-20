@@ -4,14 +4,15 @@ from collections import defaultdict
 from os import linesep
 from bisect import bisect_left, bisect_right
 import string
-from heapq import heappush, heappop
 import sys
+import gc
 
 class BestScorer:
-  def __init__(self, queries, documents, filename):
-    self.filename                = filename
-    self.posting                 = defaultdict(list)
-    self.queries, self.documents = queries, documents
+  def __init__(self, query_file='./qrys.txt', n_queries=None, documents='./docs.txt', filename='./best.top'):
+    self.filename  = filename
+    self.posting   = defaultdict(list)
+    self.queries   = islice(FileReader(query_file).all(), n_queries)
+    self.documents = list(FileReader(documents).all())
 
   def build_matching_vectors(self):
     for (doc_id, content) in self.documents:
@@ -19,44 +20,38 @@ class BestScorer:
     return self
 
   def output_scores(self):
-    def recent_matches(terms, num_matches):
-      num_terms = len(terms)
+    def recent_matches(terms, documents, num_matches):
       def do_linear_merge(queries):
-        if min(len(self.posting[query]) for query in queries) == 0:
-          return
+        def decrement_and_check_end(matches):
+          for index in matches:
+            reached_end = pointers[index] == ends[index]
+            if reached_end: return True
+            else:           pointers[index] -= 1
+          return False
 
-        min_max  = min((self.posting[query][-1] for query in queries))
-        max_min  = max((self.posting[query][0] for query in queries))
+        n_terms  = len(terms)
+        postings = [self.posting[query] for query in queries]
+        pointers = repeat(-1, n_terms)
+        ends     = repeat(0, n_terms)
 
-        def set_in_range(posting):
-          left = bisect_left(posting, max_min)
-          right = bisect_right(posting, min_max)
-          return set(posting[left:right])
+        while True:
+          min_max  = min(posting[pointer] for (posting, pointer) in zip(postings, pointers))
+          max_min  = max(posting[end] for (posting, end) in zip(postings, ends))
+          pointers = [bisect_right(posting, min_max) - 1 for posting in postings]
+          if min(pointers) == (-1): return
 
-        h = []
-        for posting in ((len(p), p) for p in (set_in_range(self.posting[query]) for query in queries)):
-          heappush(h, posting)
+          ends     = [bisect_left(posting, max_min) for posting in postings]
+          frontier = [posting[pointer] for (posting, pointer) in zip(postings, pointers)]
+          document = max(frontier)
+          matches  = [index for (index, this_document) in enumerate(frontier) if this_document == document]
 
-        popheap = (heappop(h)[1] for i in xrange(num_terms))
-
-        documents = sorted(reduce(lambda x,y: x&y, popheap), reverse=True)
-        for doc in documents:
-          yield str(doc)
-        return
-
-      return islice(do_linear_merge(terms), num_matches)
+          if len(matches) == n_terms:          yield str(document)
+          if decrement_and_check_end(matches): return
+      return islice(do_linear_merge(q), num_matches)
 
     with open(self.filename, 'w') as docs_top:
-      _join = string.join
-      docs_top.write(_join((str(q_n) + ' ' + _join(recent_matches(q, 5), ' ') + linesep for (q_n, q) in queries), ''))
+      for (q_n, q) in self.queries:
+        docs_top.write(str(q_n) + ' ' + string.join(recent_matches(q, self.documents, 5), ' ') + linesep)
 
-
-num_documents = None
-
-if len(sys.argv) >= 2:
-  num_documents   = int(sys.argv[1])
-
-queries = FileReader('./qrys.txt').all()
-documents = islice(FileReader('./docs.txt').all(), num_documents)
-
-BestScorer(queries, documents, './best.top').build_matching_vectors().output_scores()
+gc.disable()
+BestScorer().build_matching_vectors().output_scores()
