@@ -11,9 +11,12 @@ from operator import add
 sizes = [100000,200000,500000,1000000,2000000,5000000]
 
 def time_it(scoring_lambda):
+  print '-'
   started = time.time()
   scoring_lambda()
-  return time.time() - started
+  taken = time.time() - started
+  print '.'
+  return taken
 
 def average_it(scoring_lambda):
   num_trials = 1
@@ -22,8 +25,13 @@ def average_it(scoring_lambda):
 bests = map(lambda s: average_it(lambda: BestScorer(query_file='./qrys.txt.1', n_docs=s, doc_file='./full.txt')),sizes)
 print 'Best done.'
 
+doc2s = map(lambda s: average_it(lambda: DocScorerPlus(query_file='./qrys.txt.1', n_docs=s, doc_file='./full.txt').build_matching_vectors().output_scores()),sizes)
+print 'Best done.'
+
 plot(sizes, bests, ':b')
 plot(sizes, bests, 'bo', label='Best algorithm (best.py)')
+plot(sizes, doc2s, ':r')
+plot(sizes, doc2s, 'ro', label='Improved doc-at-a-time algorithm (doc2.py)')
 xscale('log')
 xlabel('Document count')
 yscale('log')
