@@ -13,7 +13,9 @@ sizes = [100,200,500,1000,2000,5000,10000,20000]
 def time_it(scoring_lambda):
   started = time.time()
   scoring_lambda()
-  return time.time() - started
+  taken = time.time() - started
+  print '.'
+  return taken
 
 def average_it(scoring_lambda):
   num_trials = 3
