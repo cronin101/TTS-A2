@@ -4,7 +4,7 @@ from sets import SetScorer
 from doc2 import DocScorerPlus
 
 class BestScorer:
-  def __init__(self, query_file='./qrys.txt', n_docs=None, doc_file='./docs.txt', filename='./best.top'):
+  def __init__(self, query_file='./../data/qrys.txt', n_docs=None, doc_file='./../data/docs.txt', filename='./../rankings/best.top'):
     if n_docs and n_docs < 900:
       DocScorerPlus(query_file, n_docs, doc_file, filename).build_matching_vectors().output_scores()
     else:

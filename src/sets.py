@@ -10,7 +10,7 @@ import gc
 import sys
 
 class SetScorer:
-  def __init__(self, query_file='./qrys.txt', n_docs=None, doc_file='./docs.txt', filename='./set.top'):
+  def __init__(self, query_file='./../data/qrys.txt', n_docs=None, doc_file='./../data/docs.txt', filename='./../rankings/set.top'):
     self.filename  = filename
     self.posting   = defaultdict(set)
     self.queries   = FileReader(query_file).all()

@@ -8,7 +8,7 @@ import sys
 import gc
 
 class DocScorerPlus:
-  def __init__(self, query_file='./qrys.txt', n_docs=None, doc_file='./docs.txt', filename='./docs+.top'):
+  def __init__(self, query_file='./../data/qrys.txt', n_docs=None, doc_file='./../data/docs.txt', filename='./../rankings/docs+.top'):
     self.filename  = filename
     self.posting   = defaultdict(list)
     self.queries   = FileReader(query_file).all()

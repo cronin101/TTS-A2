@@ -6,7 +6,7 @@ import gc
 import sys
 
 class BruteScorer:
-  def __init__(self, query_file='./qrys.txt', n_docs=None, doc_file='./docs.txt', filename='./brute.top'):
+  def __init__(self, query_file='./../data/qrys.txt', n_docs=None, doc_file='./../data/docs.txt', filename='./../rankings/brute.top'):
     self.filename = filename
     self.queries = FileReader(query_file).all()
     self.documents = list(islice(FileReader(doc_file, True).all(), n_docs))
